@@ -49,6 +49,8 @@ EthernetServer server(80);  // create a server at port 80
 EthernetClient client;
 int numeroMaquina;
 byte direccionIp[4]={};
+byte gatewayIp[4]={};
+byte maskIp[4]={};
 int puertoServidor;
 int numeroMuestras = 0;
 int intervaloMuestras = 0;
@@ -151,10 +153,18 @@ void setup()
    Serial.print("Con la direccion IP: ");
    sprintf(cc,"%u.%u.%u.%u",direccionIp[0],direccionIp[1],direccionIp[2],direccionIp[3]);
    Serial.println(cc);
+   Serial.print("Gateway IP: ");
+   sprintf(cc,"%u.%u.%u.%u",gatewayIp[0],gatewayIp[1],gatewayIp[2],gatewayIp[3]);
+   Serial.println(cc);
+   Serial.print("Subnet Mask: ");
+   sprintf(cc,"%u.%u.%u.%u",maskIp[0],maskIp[1],maskIp[2],maskIp[3]);
+   Serial.println(cc);
    ponFechaContenedor();
    iniciaCapturaDatos();
    IPAddress ip(direccionIp); // IP address
-   Ethernet.begin(mac, ip);  // inicializa Ethernet device
+   IPAddress gw(gatewayIp);
+   IPAddress msk(maskIp);
+   Ethernet.begin(mac, ip, gw, gw, msk);  // inicializa Ethernet device
    server.begin(); // Inicia escucha clientes
 }
 
@@ -293,6 +303,8 @@ void cargaValoresServidor(){
   EEPROM.get(14,intervaloMuestras);
   EEPROM.get(18, numeroMaquina);
   EEPROM.get(20, modoRespuesta);
+  EEPROM.get(22, gatewayIp);
+  EEPROM.get(26, maskIp);
   
 }
 
@@ -475,6 +487,8 @@ void printMenu()
   Serial.println(F("7) Configurar fecha y hora RTC interno"));
   Serial.println(F("8) Muestra datos EEPROM"));
   Serial.println(F("9) Reset"));
+  Serial.println(F("G) Configurar Gateway IP"));
+  Serial.println(F("S) Configurar Subnet Mask"));
   Serial.println(F("C) Configurar modo de Respuesta"));
   Serial.println(F("R) Restaurar valores por defecto"));
   Serial.println(); 
@@ -530,7 +544,15 @@ void parseMenu(){
       case '9':
         resetFunc();  //call reset
       break;
+      
+      case 'g'|'G':
+        configuraGateway();
+      break;
 
+      case 's'|'S':
+        configuraMask();
+      break;
+      
       case 'r'|'R':
         for (int y=0;y<30;y++) EEPROM.write(y,255);
         resetFunc();  //call reset
@@ -551,6 +573,9 @@ void parseMenu(){
  *  14-15 ------> Segundos entre muestras (max 65535)
  *  16-17 ------> Puntero de muestras
  *  18-19 ------> Numero de maquina
+ *  20 ---------> Modo respuesta
+ *  22-25 ------> Gateway Ip
+ *  26-29 ------> Subnet Mask
  *  100-3684 ---> Array de Muestras 0x64 - 0x0E64
  *          |---> Dia (byte)
  *          |---> Mes (byte)
@@ -564,6 +589,8 @@ void parseMenu(){
  **********************************************************/
 void setEepromDefaults(){
   byte dirIp[4] = {192,168,0,55};
+  byte gateway_[4] = {192,168,0,1};
+  byte subnetMask_[4] = {255,255,255,0}; 
   int puerto = 80;
   byte macAddress_[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
   int numeroMuestras = 50;
@@ -578,6 +605,8 @@ void setEepromDefaults(){
   EEPROMWriteInt (16,punteroMuestras);
   EEPROMWriteInt (18,0); // Numero de maquina
   EEPROM.update(20, 0); // Modo HTML por defecto
+  for (int i=0;i<4;i++)  EEPROM.update (22+i,gateway_[i]);
+  for (int i=0;i<4;i++)  EEPROM.update (26+i,subnetMask_[i]);
   //Borrar datos EEPROM de 256 muestras
   for (int iii = 100; iii<3685; iii++){
     EEPROM.update (iii,0);
@@ -587,6 +616,8 @@ void setEepromDefaults(){
 // Mostrar datos de configuracion por el puerto serie
 void muestraDatosConfig(){
   byte dirIp_[4];
+  byte gateway_[4];
+  byte subnetMask_[4];
   int puerto_;
   byte macAddress_[6];
   int numeroMuestras_;
@@ -598,6 +629,8 @@ void muestraDatosConfig(){
   EEPROM.get(6,macAddress_);
   EEPROM.get(12,numeroMuestras_);
   EEPROM.get(14,muestrasTiempo_);
+  EEPROM.get(22, gateway_);
+  EEPROM.get(26, subnetMask_);
   Serial.println();
   Serial.println(F("*******Datos de dispositivo*******"));
   Serial.print ("Direccion IP: ");
@@ -605,8 +638,18 @@ void muestraDatosConfig(){
     Serial.print (dirIp_[cc]);
     if (cc<3) Serial.print(",");
   }
-  Serial.println();
-  Serial.print("Puerto Http: ");
+  Serial.print ("\nGateway IP: ");
+  for (int cc=0;cc<4;cc++){
+    Serial.print (gateway_[cc]);
+    if (cc<3) Serial.print(",");
+  }
+  Serial.print ("\nSubnet Mask: ");
+  for (int cc=0;cc<4;cc++){
+    Serial.print (subnetMask_[cc]);
+    if (cc<3) Serial.print(",");
+  }
+
+  Serial.print("\nPuerto Http: ");
   Serial.println(puerto_);
   Serial.print("Mac Address: ");
   for (int cc=0;cc<6;cc++){
@@ -687,6 +730,51 @@ void configuraIp(){
   }  
 }
 
+/*
+ * Introducir nueva direccion IP del Gateway
+ */
+void configuraGateway(){
+  String a;
+  byte gateway_[4];
+  Serial.println("Introduce direccion IP del Gateway (formato XX.XX.XX.XX)");
+  while(Serial.available()==0);
+  a = Serial.readString();
+  // Asignar formato
+  sscanf(a.c_str(), "%u.%u.%u.%u", &gateway_[0], &gateway_[1], &gateway_[2], &gateway_[3]);
+  if ((gateway_[0]>255) || (gateway_[1]>255) || (gateway_[2]>255) || (gateway_[3]>255) ){
+    Serial.println("La direccion IP es incorrecta");
+  }
+  else{
+    Serial.print ("La nueva direccion IP del Gateway es: ");
+    Serial.println(a);
+    for (int i=0;i<4;i++)  EEPROM.update (22+i,gateway_[i]);
+    Serial.println(); 
+    printMenu();
+  }  
+}
+
+/*
+ * Introducir nueva direccion IP del Gateway
+ */
+void configuraMask(){
+  String a;
+  byte mask_[4];
+  Serial.println("Introduce Subnet mask (formato XX.XX.XX.XX)");
+  while(Serial.available()==0);
+  a = Serial.readString();
+  // Asignar formato
+  sscanf(a.c_str(), "%u.%u.%u.%u", &mask_[0], &mask_[1], &mask_[2], &mask_[3]);
+  if ((mask_[0]>255) || (mask_[1]>255) || (mask_[2]>255) || (mask_[3]>255) ){
+    Serial.println("La subnet mask es incorrecta");
+  }
+  else{
+    Serial.print ("La nueva Subnet mask es: ");
+    Serial.println(a);
+    for (int i=0;i<4;i++)  EEPROM.update (26+i,mask_[i]);
+    Serial.println(); 
+    printMenu();
+  }  
+}
 /*
  * Introducir nueva direccion Mac desde la configuracion
  */
