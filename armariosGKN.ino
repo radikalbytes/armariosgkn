@@ -1093,6 +1093,7 @@ void enviarDatosCSV(){
   float humCap;
   float dewCap;
   byte indice = 0;
+  byte resto = 0;
   int chk = DHT.read22(DHT11_PIN);
   
   punteroEeprom__ = EEPROMReadInt(16); //Cargamos valor del puntero muestras
@@ -1126,22 +1127,26 @@ void enviarDatosCSV(){
         client.print(dewPoint(tmp, hum)); 
         client.print("\n");
       }//end if
+      else resto++;
       punteroEeprom__ ++;
       if (punteroEeprom__ == numeroMuestras) punteroEeprom__ = 0;
   }// end for oo 
   humCap = DHT.humidity;
   temCap = DHT.temperature;
   dewCap = dewPoint(DHT.temperature, DHT.humidity); 
-  client.print(indice);
-  client.print(","); 
-  ponFechaTcp();
-  client.print(",");
-  client.print(temCap);
-  client.print(",");
-  client.print(humCap);
-  client.print(",");
-  client.print(dewCap);
-  client.print("\n");
+  for (int u=0;u<resto-1;u++){
+      client.print(indice);
+      client.print(","); 
+      ponFechaTcp();
+      client.print(",");
+      client.print(temCap);
+      client.print(",");
+      client.print(humCap);
+      client.print(",");
+      client.print(dewCap);
+      client.print("\n");
+  }
+  
 }
 
 /*
