@@ -1131,11 +1131,34 @@ void enviarDatosCSV(){
       punteroEeprom__ ++;
       if (punteroEeprom__ == numeroMuestras) punteroEeprom__ = 0;
   }// end for oo 
+  for (int u=0;u<resto;u++){
+      client.print(indice+u);
+      client.print(","); 
+      send2digits(EEPROM.read(posicionEeprom));
+        client.print("/");
+        send2digits(EEPROM.read(posicionEeprom+1));
+        client.print("/");
+        send2digits(EEPROM.read(posicionEeprom+2));
+        client.print(" ");
+        send2digits(EEPROM.read(posicionEeprom+3));
+        client.print(":");
+        send2digits(EEPROM.read(posicionEeprom+4));
+        client.print(":");
+        send2digits(EEPROM.read(posicionEeprom+5));
+        client.print(",");
+        client.print(tmp);
+        client.print(",");
+        client.print(hum);
+        client.print(",");
+        client.print(dewPoint(tmp, hum)); 
+        client.print("\n");
+  }
+  /*
   humCap = DHT.humidity;
   temCap = DHT.temperature;
   dewCap = dewPoint(DHT.temperature, DHT.humidity); 
-  for (int u=0;u<resto-1;u++){
-      client.print(indice);
+  for (int u=0;u<resto;u++){
+      client.print(indice+u);
       client.print(","); 
       ponFechaTcp();
       client.print(",");
@@ -1145,7 +1168,8 @@ void enviarDatosCSV(){
       client.print(",");
       client.print(dewCap);
       client.print("\n");
-  }
+      
+  } */
   
 }
 

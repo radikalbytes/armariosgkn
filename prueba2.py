@@ -114,7 +114,14 @@ def main():
           # Indexar por numero de muestra (orden)
           data.set_index("muestra", inplace=True)
           dates = data['timestamp']
-
+          datos_ticks = dates.tolist()
+          longitud = len(datos_ticks)
+          if (longitud<21):
+              intervalo = 1
+          else:
+              intervalo = longitud/20
+          datos_ticks_mostrar = datos_ticks[0:int(longitud-1):int(intervalo)]
+          #print(datos_ticks_mostrar)
           for j in range(3):
               ax[j].relim()
               ax[j].autoscale_view(True,True,True)
@@ -123,10 +130,10 @@ def main():
           line1.set_ydata(data['temperatura'])
           line2.set_ydata(data['humedad'])
           line3.set_ydata(data['pdr'])
-          ax[2].set_xticklabels(dates)
+          ax[2].set_xticklabels(datos_ticks_mostrar)
 
           # 10 segundos entre refrescos
-          plt.pause(10)
+          plt.pause(2)
           fig.canvas.draw()
 
 if __name__ == '__main__':
