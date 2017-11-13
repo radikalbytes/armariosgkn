@@ -23,14 +23,12 @@ http.client._MAXHEADERS = 10000 # evitar fallo por max headers html
 tick_spacing = 0.08
 dateparse = lambda x: pd.datetime.strptime(x, '%d/%m/%y %H:%M:%S')
 def main():
-    if len(sys.argv) >= 3:
+    if len(sys.argv) >= 2:
         ip_addres = (sys.argv[1]) # Introducir ip por argumento
-        num_maquina = sys.argv[2] # Introducir numero de maquina por argumento
     else:
         print ("Necesita pasar como parametro la IP de la maquina a monitorizar")
-        print ("y el nombre de la maquina")
-        print ("Ejemplo: py armario.py 192.168.0.15 WQ2533")
-        print ("         armario.exe 192.168.0.15 WQ2533")
+        print ("Ejemplo: py armario.py 192.168.0.15 ")
+        print ("         armario.exe 192.168.0.15")
         sys.exit()
     while True:
         # Peticion GET html al servidor Arduino
@@ -42,12 +40,15 @@ def main():
         f.write(r.text)
         f.close()
         # Parsear csv y normalizar campo fecha
-        data=pd.read_csv('data.csv', parse_dates=['timestamp'], date_parser=dateparse)
+        data1=pd.read_csv('data.csv', parse_dates=['timestamp'], date_parser=dateparse)
+        data = data1.head(len(data1['muestra'])-1)
+        linea=data1.ix[len(data1)-1]
+        print(linea)
         # Indexar por numero de muestra (orden)
-        data.set_index("muestra", inplace=True)
+        data.set_index("muestra")
         # Tamaño ventana de graficas
         fig, ax = plt.subplots(3, sharex=True, figsize=(7.5,3))
-        titulo = num_maquina + "   " + ip_addres
+        titulo = "WQ"+ str(linea['maquina']) + "   " + ip_addres + "  " + str(linea['temperatura'])+"ºC  "+str(linea['humedad'])+"%"
         xfmt = mdates.DateFormatter('%d/%m/%y %H:%M')
         dates = data['timestamp']
 
@@ -65,7 +66,6 @@ def main():
             ax[j].xaxis.set_major_locator(ticker.LinearLocator(20))
             ax[2].set_xticklabels(dates)
             # Formato de los labels D/M/Y H:M
-            #ax[j].xaxis.set_major_formatter(xfmt)
             ax[j].tick_params(axis='y', width=2, labelsize=6)
         # Rotar los labels 45 grados
         for label in ax[2].xaxis.get_ticklabels():
@@ -95,6 +95,7 @@ def main():
         line1, = ax[0].plot(data['temperatura'], linewidth=2, color='#CF2017')
         line2, = ax[1].plot(data['humedad'], linewidth=2, color='#17BECF')
         line3, = ax[2].plot(data['pdr'], linewidth=2, color = '#cfb617')
+
         # plt.pause muestra las graficas actualizadas
         plt.pause(0.001)
         while(1):
@@ -110,28 +111,29 @@ def main():
           #Codigo de ESCkey para windows
           #if msvcrt.kbhit() and msvcrt.getch()[0] == 27:
           #    sys.exit()
-          data=pd.read_csv('data.csv') #, parse_dates=['timestamp'], date_parser=dateparse)
+          data1=pd.read_csv('data.csv') #, parse_dates=['timestamp'], date_parser=dateparse)
+          data = data1.head(len(data1['muestra'])-1)
+          print(len(data1['muestra'])-1)
+
           # Indexar por numero de muestra (orden)
-          data.set_index("muestra", inplace=True)
+          data.set_index("muestra")
           dates = data['timestamp']
           datos_ticks = dates.tolist()
           longitud = len(datos_ticks)
           if (longitud<21):
               intervalo = 1
           else:
-              intervalo = longitud/20
-          datos_ticks_mostrar = datos_ticks[0:int(longitud-1):int(intervalo)]
-          #print(datos_ticks_mostrar)
+              intervalo = longitud/18
+          datos_ticks_mostrar = datos_ticks[1:int(longitud-1):int(intervalo)]
+          print(datos_ticks_mostrar)
           for j in range(3):
               ax[j].relim()
               ax[j].autoscale_view(True,True,True)
-             # ax[j].xaxis.set_major_locator(ticker.LinearLocator(len(dates)))
           # Actualiza graficas
           line1.set_ydata(data['temperatura'])
           line2.set_ydata(data['humedad'])
           line3.set_ydata(data['pdr'])
           ax[2].set_xticklabels(datos_ticks_mostrar)
-
           # 10 segundos entre refrescos
           plt.pause(2)
           fig.canvas.draw()

@@ -611,6 +611,7 @@ void setEepromDefaults(){
   for (int iii = 100; iii<3685; iii++){
     EEPROM.update (iii,0);
   }
+  capturaMuestra();
 }
 
 // Mostrar datos de configuracion por el puerto serie
@@ -873,6 +874,7 @@ void configuraMuestras(){
     EEPROMWriteInt (12,numeroMuestras_);
     Serial.println(); 
     borraMuestrasEeprom();
+    capturaMuestra();
     printMenu();
   }
 }
@@ -935,19 +937,21 @@ void iniciaCapturaDatos(){
    temCap = DHT.temperature;
    dewCap = dewPoint(DHT.temperature, DHT.humidity); 
    // Guardar captura
-   RTC.read(timestampCap);
-   guardaCapturaEeprom(temCap, humCap, dewCap, timestampCap);
+   if (RTC.read(timestampCap)==true){
+       guardaCapturaEeprom(temCap, humCap, dewCap, timestampCap);
    
-   // Debug
-   ponFechaSerie();
-   Serial.print("\t");
-   Serial.print("T=");
-   Serial.print(temCap);
-   Serial.print("\tH=");
-   Serial.print(humCap);
-   Serial.print("\tD=");
-   Serial.println(dewCap);
-   // Fin debug
+       // Debug
+       ponFechaSerie();
+       Serial.print("\t");
+       Serial.print("T=");
+       Serial.print(temCap);
+       Serial.print("\tH=");
+       Serial.print(humCap);
+       Serial.print("\tD=");
+       Serial.println(dewCap);
+       // Fin debug
+   }
+   else Serial.print("\nFallo en RTC!! Comprobar bateria y conexiones");
  }
 
 /*
@@ -1099,7 +1103,7 @@ void enviarDatosCSV(){
   punteroEeprom__ = EEPROMReadInt(16); //Cargamos valor del puntero muestras
   if (punteroEeprom__ == numeroMuestras) punteroEeprom__ = 0;
 
-  client.print("muestra,timestamp,temperatura,humedad,pdr\n");
+  client.print("muestra,timestamp,temperatura,humedad,pdr,maquina\n");
   for (int oo = 0; oo<numeroMuestras; oo++){
       posicionEeprom = (punteroEeprom__ * 14) + 100; // posicion siguiente a la ultima
       if (EEPROM.read(posicionEeprom) > 0)  {
@@ -1125,6 +1129,8 @@ void enviarDatosCSV(){
         client.print(hum);
         client.print(",");
         client.print(dewPoint(tmp, hum)); 
+        client.print(",");
+        client.print(numeroMaquina); 
         client.print("\n");
       }//end if
       else resto++;
@@ -1132,7 +1138,7 @@ void enviarDatosCSV(){
       if (punteroEeprom__ == numeroMuestras) punteroEeprom__ = 0;
   }// end for oo 
   for (int u=0;u<resto;u++){
-      client.print(indice+u);
+      client.print(indice);
       client.print(","); 
       send2digits(EEPROM.read(posicionEeprom));
         client.print("/");
@@ -1151,25 +1157,29 @@ void enviarDatosCSV(){
         client.print(hum);
         client.print(",");
         client.print(dewPoint(tmp, hum)); 
+        client.print(",");
+        client.print(numeroMaquina); 
         client.print("\n");
+        indice++;
   }
-  /*
+  //Datos actuales
   humCap = DHT.humidity;
   temCap = DHT.temperature;
   dewCap = dewPoint(DHT.temperature, DHT.humidity); 
-  for (int u=0;u<resto;u++){
-      client.print(indice+u);
-      client.print(","); 
-      ponFechaTcp();
-      client.print(",");
-      client.print(temCap);
-      client.print(",");
-      client.print(humCap);
-      client.print(",");
-      client.print(dewCap);
-      client.print("\n");
+  client.print(indice);
+  client.print(","); 
+  ponFechaTcp();
+  client.print(",");
+  client.print(temCap);
+  client.print(",");
+  client.print(humCap);
+  client.print(",");
+  client.print(dewCap);
+  client.print(",");
+  client.print(numeroMaquina);
+  client.print("\n"); 
       
-  } */
+  
   
 }
 
