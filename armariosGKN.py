@@ -86,7 +86,7 @@ def main():
         ax[1].grid()
         ax[1].set_autoscale_on('True')
         # Grafica de punto de rocio
-        ax[2].set_xlabel('Timestamp',fontsize = 10)
+        ax[2].set_xlabel('Timestamp',fontsize = 8)
         ax[2].set_ylabel('Punto de rocio',fontsize = 8)
         ax[2].grid()
         ax[2].set_autoscale_on('True')
@@ -114,6 +114,8 @@ def main():
           data1=pd.read_csv('data.csv') #, parse_dates=['timestamp'], date_parser=dateparse)
           data = data1.head(len(data1['muestra'])-1)
           print(len(data1['muestra'])-1)
+          linea=data1.ix[len(data1)-1]
+          titulo = "WQ"+ str(linea['maquina']) + "   " + ip_addres + "  " + str(linea['temperatura'])+"ºC  "+str(linea['humedad'])+"%"
 
           # Indexar por numero de muestra (orden)
           data.set_index("muestra")
@@ -134,6 +136,8 @@ def main():
           line2.set_ydata(data['humedad'])
           line3.set_ydata(data['pdr'])
           ax[2].set_xticklabels(datos_ticks_mostrar)
+          ax[0].set_title(titulo, fontsize = 12, fontweight = 4, horizontalalignment = 'center')
+
           # 10 segundos entre refrescos
           plt.pause(2)
           fig.canvas.draw()
