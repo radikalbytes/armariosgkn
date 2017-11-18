@@ -12,7 +12,8 @@
 #include <Time.h>
 #include <TimeAlarms.h>
 #include <EEPROMex.h>
-
+//#define dht22
+#define dht11
 //EEPROM limites
 const int memBase = 0;
 const int maxAllowedWrites = 20;
@@ -27,14 +28,27 @@ int segundo_;
 int dia_;
 int mes_;
 int anno_;
+
 // DHT Asignacion de Pines
 dht DHT;
-#define DHT11_PIN 6
-#define DHT11_VCC 7
-#define DHT11_GND 4
+#ifdef dht22
+  /*Define pins for DHT22*/
+  #define DHT11_PIN 6
+  #define DHT11_VCC 7
+  #define DHT11_GND 4
+#else
+  /*Define pins for DHT11*/
+  #define DHT11_PIN 6
+  #define DHT11_VCC 7
+  #define DHT11_GND 5
+#endif
 
+// Definicion pines alimentacion RTC
+  #define RTC_GND 43
+  #define RTC_VCC 41
+  
 // Tamano del buffer asignado a captura de peticiones HTTP
-#define REQ_BUF_SZ   50
+#define REQ_BUF_SZ   20
 
 // Variables Globales
 float temperatura_= 0.0;
@@ -116,6 +130,12 @@ void setup()
    pinMode(DHT11_GND, OUTPUT);
    digitalWrite(DHT11_VCC, HIGH);
    digitalWrite(DHT11_GND, LOW);
+   //Alimenta RTC
+   pinMode(RTC_VCC, OUTPUT);
+   pinMode(RTC_GND, OUTPUT);
+   digitalWrite(RTC_VCC, HIGH);
+   digitalWrite(RTC_GND, LOW);
+   
    pinMode(DHT11_PIN, INPUT);         // Internal pullup activac
    digitalWrite(DHT11_PIN, HIGH);     // Pin to high (pull-up)
    // Config limites EEPROM
@@ -239,6 +259,8 @@ void loop()
                     client.println("Connection: close");  // the connection will be closed after completion of the response
                     client.println();
                     enviarDatosCSV();
+                    
+                    //client.stop();
                     break;
                   }
 
@@ -314,7 +336,11 @@ void cargaValoresServidor(){
 void XML_response(EthernetClient cl)
 {
     char sample;
-    int chk = DHT.read22(DHT11_PIN);
+    #ifdef dht22
+     int chk = DHT.read22(DHT11_PIN);
+    #else
+     int chk = DHT.read11(DHT11_PIN);
+    #endif
     if ((chk) == DHTLIB_OK){
       humedad_ = DHT.humidity;
       temperatura_ = DHT.temperature;
@@ -932,7 +958,11 @@ void iniciaCapturaDatos(){
    float temCap;
    float humCap;
    float dewCap;
-   int chk = DHT.read22(DHT11_PIN);
+   #ifdef dht22
+     int chk = DHT.read22(DHT11_PIN);
+   #else
+     int chk = DHT.read11(DHT11_PIN);
+   #endif
    humCap = DHT.humidity;
    temCap = DHT.temperature;
    dewCap = dewPoint(DHT.temperature, DHT.humidity); 
@@ -1037,7 +1067,11 @@ void muestraDatosEeprom(){
   float humCap;
   float dewCap;
   byte indice = 0;
-  int chk = DHT.read22(DHT11_PIN);
+  #ifdef dht22
+     int chk = DHT.read22(DHT11_PIN);
+  #else
+     int chk = DHT.read11(DHT11_PIN);
+  #endif
   humCap = DHT.humidity;
   temCap = DHT.temperature;
   dewCap = dewPoint(DHT.temperature, DHT.humidity); 
@@ -1098,7 +1132,11 @@ void enviarDatosCSV(){
   float dewCap;
   byte indice = 0;
   byte resto = 0;
-  int chk = DHT.read22(DHT11_PIN);
+  #ifdef dht22
+     int chk = DHT.read22(DHT11_PIN);
+  #else
+     int chk = DHT.read11(DHT11_PIN);
+  #endif
   
   punteroEeprom__ = EEPROMReadInt(16); //Cargamos valor del puntero muestras
   if (punteroEeprom__ == numeroMuestras) punteroEeprom__ = 0;

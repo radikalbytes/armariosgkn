@@ -18,6 +18,8 @@ import matplotlib.backends.backend_tkagg # evita error al compilar
 import matplotlib.ticker as ticker
 import matplotlib.dates as mdates
 import numpy as np
+import numpy.core._methods
+import numpy.lib.format
 #import msvcrt  #para windows
 http.client._MAXHEADERS = 10000 # evitar fallo por max headers html
 tick_spacing = 0.08
