@@ -5,7 +5,8 @@
 // Libraries 
 #include <dht.h>
 #include <SPI.h>
-#include <UIPEthernet.h>
+//#include <UIPEthernet.h>
+#include <Ethernet3.h>
 #include <EEPROM.h> 
 #include <Wire.h>
 #include <DS1307RTC.h>
