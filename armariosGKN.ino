@@ -5,6 +5,7 @@
 // Libraries 
 #include <dht.h>
 #include <SPI.h>
+//include <EtherCard.h>
 #include <UIPEthernet.h>
 #include <EEPROM.h> 
 #include <Wire.h>
@@ -12,8 +13,8 @@
 #include <Time.h>
 #include <TimeAlarms.h>
 #include <EEPROMex.h>
-//#define dht22
-#define dht11
+#define dht22
+//#define dht11
 //EEPROM limites
 const int memBase = 0;
 const int maxAllowedWrites = 20;
@@ -1149,27 +1150,27 @@ void enviarDatosCSV(){
         client.print(",");
         indice++;
         send2digits(EEPROM.read(posicionEeprom));
-        client.print("/");
+        client.print(F("/"));
         send2digits(EEPROM.read(posicionEeprom+1));
-        client.print("/");
+        client.print(F("/"));
         send2digits(EEPROM.read(posicionEeprom+2));
-        client.print(" ");
+        client.print(F(" "));
         send2digits(EEPROM.read(posicionEeprom+3));
-        client.print(":");
+        client.print(F(":"));
         send2digits(EEPROM.read(posicionEeprom+4));
-        client.print(":");
+        client.print(F(":"));
         send2digits(EEPROM.read(posicionEeprom+5));
-        client.print(",");
+        client.print(F(","));
         tmp = EEPROMex.readFloat(posicionEeprom+6);
         client.print(tmp);
-        client.print(",");
+        client.print(F(","));
         hum = EEPROMex.readFloat(posicionEeprom+10);
         client.print(hum);
-        client.print(",");
+        client.print(F(","));
         client.print(dewPoint(tmp, hum)); 
-        client.print(",");
+        client.print(F(","));
         client.print(numeroMaquina); 
-        client.print("\n");
+        client.print(F("\n"));
       }//end if
       else resto++;
       punteroEeprom__ ++;
@@ -1177,27 +1178,27 @@ void enviarDatosCSV(){
   }// end for oo 
   for (int u=0;u<resto;u++){
       client.print(indice);
-      client.print(","); 
+      client.print(F(",")); 
       send2digits(EEPROM.read(posicionEeprom));
-        client.print("/");
+        client.print(F("/"));
         send2digits(EEPROM.read(posicionEeprom+1));
-        client.print("/");
+        client.print(F("/"));
         send2digits(EEPROM.read(posicionEeprom+2));
-        client.print(" ");
+        client.print(F(" "));
         send2digits(EEPROM.read(posicionEeprom+3));
-        client.print(":");
+        client.print(F(":"));
         send2digits(EEPROM.read(posicionEeprom+4));
-        client.print(":");
+        client.print(F(":"));
         send2digits(EEPROM.read(posicionEeprom+5));
-        client.print(",");
+        client.print(F(","));
         client.print(tmp);
-        client.print(",");
+        client.print(F(","));
         client.print(hum);
-        client.print(",");
+        client.print(F(","));
         client.print(dewPoint(tmp, hum)); 
-        client.print(",");
+        client.print(F(","));
         client.print(numeroMaquina); 
-        client.print("\n");
+        client.print(F("\n"));
         indice++;
   }
   //Datos actuales
@@ -1205,19 +1206,19 @@ void enviarDatosCSV(){
   temCap = DHT.temperature;
   dewCap = dewPoint(DHT.temperature, DHT.humidity); 
   client.print(indice);
-  client.print(","); 
+  client.print(F(",")); 
   ponFechaTcp();
-  client.print(",");
+  client.print(F(","));
   client.print(temCap);
-  client.print(",");
+  client.print(F(","));
   client.print(humCap);
-  client.print(",");
+  client.print(F(","));
   client.print(dewCap);
-  client.print(",");
+  client.print(F(","));
   client.print(numeroMaquina);
-  client.print("\n"); 
+  client.print(F("\n")); 
       
-  
+  delay(1500);
   
 }
 
