@@ -11,6 +11,7 @@
 #include <Wire.h>
 #include <DS1307RTC.h>
 #include <Time.h>
+#include <TimeLib.h>
 #include <TimeAlarms.h>
 #include <EEPROMex.h>
 #define dht22
